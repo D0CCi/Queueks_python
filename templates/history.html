@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}История обработки - Система регистрации вагонов{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-history text-secondary"></i> 
+        История обработанных вагонов
+    </h2>
+    {% if current_user.username == 'admin' %}
+    <span class="badge bg-warning text-dark">Режим администратора</span>
+    {% else %}
+    <span class="badge bg-info">Ваша история</span>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-check-circle"></i> 
+            {% if current_user.username == 'admin' %}
+                Все обработанные вагоны
+            {% else %}
+                Ваши обработанные вагоны
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        {% if wagons %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Номер вагона</th>
+                            {% if current_user.username == 'admin' %}
+                            <th>Клиент</th>
+                            {% endif %}
+                            <th>Тип груза</th>
+                            <th>Маршрут</th>
+                            <th>Вес (т)</th>
+                            <th>Время регистрации</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for wagon in wagons %}
+                        <tr class="{{ 'table-success' if wagon.user_id == current_user.id and current_user.username == 'admin' else '' }}">
+                            <td>
+                                <strong>{{ wagon.wagon_number }}</strong>
+                                {% if wagon.user_id == current_user.id and current_user.username == 'admin' %}
+                                    <i class="fas fa-user text-success ms-1" title="Ваш вагон"></i>
+                                {% endif %}
+                            </td>
+                            {% if current_user.username == 'admin' %}
+                            <td>
+                                <span class="{{ 'fw-bold text-success' if wagon.user_id == current_user.id else 'text-muted' }}">
+                                    {{ wagon.owner.company_name or wagon.owner.username }}
+                                </span>
+                                {% if wagon.user_id == current_user.id %}
+                                    <small class="text-success d-block">(Вы)</small>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td>{{ wagon.cargo_type }}</td>
+                            <td>
+                                <small class="text-muted">{{ wagon.departure_point }}</small>
+                                <br>
+                                <i class="fas fa-arrow-down text-primary"></i>
+                                <small>{{ wagon.destination }}</small>
+                            </td>
+                            <td>{{ wagon.weight }}</td>
+                            <td>{{ wagon.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> {{ wagon.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                {% if current_user.username == 'admin' %}
+                    <p class="text-muted">Нет обработанных вагонов в системе</p>
+                {% else %}
+                    <p class="text-muted">У вас нет обработанных вагонов</p>
+                {% endif %}
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить вагон в очередь
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    {% if wagons %}
+    <div class="card-footer">
+        <div class="row">
+            <div class="col-md-6">
+                <small class="text-muted">
+                    {% if current_user.username == 'admin' %}
+                        Всего обработано: <strong>{{ wagons|length }}</strong> вагонов
+                    {% else %}
+                        Ваших обработано: <strong>{{ wagons|length }}</strong> вагонов
+                    {% endif %}
+                </small>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    Общий вес: <strong>{{ "%.1f"|format(wagons|sum(attribute='weight')) }}</strong> тонн
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Вернуться к очереди
+        </a>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-info">
+            <i class="fas fa-user-circle"></i> Личный кабинет
+        </a>
+    </div>
+</div>
+{% endblock %}

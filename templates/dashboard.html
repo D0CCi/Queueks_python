@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет - Система регистрации вагонов{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-user-circle text-primary"></i> 
+                Личный кабинет
+            </h2>
+            <div class="text-muted">
+                <i class="fas fa-building"></i> 
+                {{ current_user.company_name or current_user.username }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ wagons_in_queue|length }}</h3>
+                <small>Вагонов в очереди</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ wagons_processed|length }}</h3>
+                <small>Обработано вагонов</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-weight-hanging fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ "%.1f"|format(total_weight_queue) }}</h3>
+                <small>Тонн в очереди</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                <h3 class="mb-0">{{ "%.1f"|format(total_weight_processed) }}</h3>
+                <small>Тонн обработано</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Мои вагоны в очереди
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if wagons_in_queue %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Позиция</th>
+                                    <th>Номер</th>
+                                    <th>Груз</th>
+                                    <th>Маршрут</th>
+                                    <th>Вес (т)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for wagon in wagons_in_queue %}
+                                <tr class="{{ 'table-warning' if wagon.position == 1 else '' }}">
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if wagon.position <= 3 else 'secondary' }}">
+                                            {{ wagon.position }}
+                                        </span>
+                                    </td>
+                                    <td><strong>{{ wagon.wagon_number }}</strong></td>
+                                    <td>{{ wagon.cargo_type }}</td>
+                                    <td>
+                                        <small class="text-muted">{{ wagon.departure_point }}</small>
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        <small>{{ wagon.destination }}</small>
+                                    </td>
+                                    <td>{{ wagon.weight }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">У вас нет вагонов в очереди</p>
+                        <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm mt-2">
+                            <i class="fas fa-plus"></i> Добавить вагон
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-history"></i> Последние обработанные
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if wagons_processed %}
+                    <div class="list-group list-group-flush">
+                        {% for wagon in wagons_processed[:5] %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ wagon.wagon_number }}</h6>
+                                    <p class="mb-1 small">{{ wagon.cargo_type }}</p>
+                                    <small class="text-muted">
+                                        {{ wagon.departure_point }} → {{ wagon.destination }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success">{{ wagon.weight }}т</span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ wagon.timestamp.strftime('%d.%m') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if wagons_processed|length > 5 %}
+                    <div class="card-footer text-center">
+                        <a href="{{ url_for('history') }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-eye"></i> Показать все
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Нет обработанных вагонов</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Информация об аккаунте
+                </h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Пользователь:</dt>
+                    <dd class="col-sm-7">{{ current_user.username }}</dd>
+                    
+                    <dt class="col-sm-5">Email:</dt>
+                    <dd class="col-sm-7">{{ current_user.email }}</dd>
+                    
+                    {% if current_user.company_name %}
+                    <dt class="col-sm-5">Компания:</dt>
+                    <dd class="col-sm-7">{{ current_user.company_name }}</dd>
+                    {% endif %}
+                    
+                    <dt class="col-sm-5">Регистрация:</dt>
+                    <dd class="col-sm-7">{{ current_user.created_at.strftime('%d.%m.%Y') }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar"></i> Статистика по типам грузов
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if wagons_in_queue %}
+                    <div class="row">
+                        {% set cargo_stats = {} %}
+                        {% for wagon in wagons_in_queue %}
+                            {% if cargo_stats.update({wagon.cargo_type: cargo_stats.get(wagon.cargo_type, 0) + 1}) %}{% endif %}
+                        {% endfor %}
+                        
+                        {% for cargo_type, count in cargo_stats.items() %}
+                        <div class="col-md-3 mb-2">
+                            <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                                <span class="small">{{ cargo_type }}</span>
+                                <span class="badge bg-primary">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Нет данных для отображения статистики</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Автообновление данных каждые 30 секунд
+setInterval(function() {
+    if (document.visibilityState === 'visible') {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}
